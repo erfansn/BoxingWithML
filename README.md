@@ -1,5 +1,5 @@
-# 🥊 Boxing With ML 🦾
-Detection of fist movements with Mediapipe for play boxing game 🥊🎲. 
+# 🥊 BoxingWithML
+Detection of fist movements with Mediapipe for play boxing game 🎲. 
 
 ## Contents
 
