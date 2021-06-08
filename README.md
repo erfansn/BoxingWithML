@@ -23,7 +23,7 @@ To run the script you need to install last version the following modules:
 
 ## Output
 
-[![Play boxing game with hands (ML)](https://yt-embed.herokuapp.com/embed?v=z_O3CK_k1D8)](https://www.youtube.com/watch?v=z_O3CK_k1D8)
+[![Play boxing game with hands (ML)](https://camo.githubusercontent.com/4fa9fdbb813881e20d82444430dd3032aabd64d06cd5e142dd6e03c0cc7c3193/68747470733a2f2f79742d656d6265642e6865726f6b756170702e636f6d2f656d6265643f763d7a5f4f33434b5f6b314438)](https://www.youtube.com/watch?v=z_O3CK_k1D8)
 
 ## Known issues
 
