@@ -2,15 +2,16 @@ import mediapipe as mp
 import cv2
 from pynput.keyboard import Controller as KeyboardController
 from scipy.stats import linregress
+import numpy as np
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
-hand_area = [[], []]
-hand_order = [0, 0]
+hands_area = [[], []]
 counter = 0
 
-position_leftHand = (0, 0)
-position_rightHand = (0, 0)
+leftHand_positions = [np.array([0, 0]), np.array([0, 0])]
+rightHand_positions = [np.array([0, 0]), np.array([0, 0])]
+damping_factory = 0.15
 
 key = KeyboardController()
 cap = cv2.VideoCapture(0)
@@ -37,28 +38,51 @@ while cap.isOpened():
             x_min, x_max = min(x_list), max(x_list)
             y_min, y_max = min(y_list), max(y_list)
 
-            # cv2.rectangle(
-            #     img, (x_min, y_min), (x_max, y_max), (255, 255, 255), 2
-            # )
+            top_left_point_hand = np.array([x_min, y_min])
+            bottom_right_point_hand = np.array([x_max, y_max])
 
-            if hand_id < 2:
-                hand_area[hand_id] += [(x_max - x_min) * (y_max - y_min)]
-                hand_order[hand_id] = x_min
+            handedness = results.multi_handedness[hand_id].classification[0].label
+            handedness_id = -1
+            hand_positions = []
 
-    if len(hand_area[0]) and len(hand_area[1]) >= 5:
-        left = hand_area[0][-5:]
-        right = hand_area[1][-5:]
+            if handedness == "Left":
+                current_top_left_point_hand = leftHand_positions[0] + (
+                            top_left_point_hand - leftHand_positions[0]) * damping_factory
+                current_bottom_right_point_hand = leftHand_positions[1] + (
+                            bottom_right_point_hand - leftHand_positions[1]) * damping_factory
 
-        if hand_order[0] > hand_order[1]:
-            left, right = right, left
+                handedness_id = 0
+                hand_positions = leftHand_positions
+            else:
+                current_top_left_point_hand = rightHand_positions[0] + (
+                            top_left_point_hand - rightHand_positions[0]) * damping_factory
+                current_bottom_right_point_hand = rightHand_positions[1] + (
+                            bottom_right_point_hand - rightHand_positions[1]) * damping_factory
+
+                handedness_id = 1
+                hand_positions = rightHand_positions
+
+            max_width_hand = (current_bottom_right_point_hand[0] - current_top_left_point_hand[0])
+            max_height_hand = (current_bottom_right_point_hand[1] - current_top_left_point_hand[1])
+            hands_area[handedness_id] += [max_width_hand * max_height_hand]
+
+            cv2.rectangle(
+                img, (int(current_top_left_point_hand[0]), int(current_top_left_point_hand[1])),
+                (int(current_bottom_right_point_hand[0]), int(current_bottom_right_point_hand[1])), (255, 255, 255),
+                2
+            )
+
+            hand_positions[0] = current_top_left_point_hand
+            hand_positions[1] = current_bottom_right_point_hand
+
+    if len(hands_area[0]) >= 5 and len(hands_area[1]) >= 5:
+        left = hands_area[0][-5:]
+        right = hands_area[1][-5:]
 
         x = list(range(5))
 
         left_hand_slope, _, _, _, _ = linregress(x, left)
         right_hand_slope, _, _, _, _ = linregress(x, right)
-
-        # print(f"Left: {left_hand_slope}, Right: {right_hand_slope}")
-        # print(left_hand_slope)
 
         if left_hand_slope > 600:
             key.press('y')
@@ -73,8 +97,8 @@ while cap.isOpened():
             print(f"Right Click {counter}: {right_hand_slope}")
             counter += 1
 
-        hand_area[0] = []
-        hand_area[1] = []
+        hands_area[0] = []
+        hands_area[1] = []
 
     cv2.imshow("Screen", img)
 
